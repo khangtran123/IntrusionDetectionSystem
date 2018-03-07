@@ -83,6 +83,7 @@ def crontab(attemptsNum, timeSlowScan, banTime):
         crontab.close()
     #os.system('crontab /etc/crontab')
 
+
 '''
 Class userProfile --> is what sets up the UserProfile object that represents
                       two attributes: Their IP Address + time of attempt
@@ -141,8 +142,14 @@ def calculateTotalTime(timeEntry):
     
     return totalTimePerAttempt
 
+
+'''
+Function addTimesForUser --> Reference the user object and add the new timestamp
+                             for the failed attempt to user's timestamps dictionary.
+'''
 def addTimesForUser(timestamp):
     userID.timestamps.append(timestamp)
+    
     
 def blockIP(clientIP):
     global banTime
@@ -158,10 +165,12 @@ def blockIP(clientIP):
         timer.start()
         print ("User: " + str(clientIP) + " has been banned from logging into you machine for " + banTime + " minutes")
 
+
 def unblockIP(clientIP):
     #   -D --> Removes/Deletes this current netfilter rule
     removeNetfilterCommand = "iptables -D INPUT -s %s -j DROP" % str(clientIP)
     os.system(removeNetfilterCommand)
+
 
 '''
 For this IDS, we will use an event handler to deal with specific IP addresses
@@ -173,7 +182,6 @@ def on_modified --> Called when a file or directory is modified. Soo since
                     to connect whether or not it was successful or a fail, we 
                     need to "action" it once there is a change to that file.
 '''
-
 class Event(LoggingEventHandler):
     global failedAttempts
     global totalAttempts
@@ -266,10 +274,16 @@ def main():
     crontab(attemptsLimit, timeSlowScan, banTime)
     eventHandler = Event()
     
+    #   observer is a library used to monitor any events/changes from /var/log
+    #   if an event is triggered, it will launch the event handler
     observer = Observer()
-    observer
     observer.schedule(eventHandler, path='/var/log', recursive=False)
     observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
     observer.join()
     
     failedAttempts = []
